@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Měření tepové frekvence / Heart Rate Counter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .heartbeat {
+            animation: heartbeat 0.6s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        let clicks = [];
+        let bpm = null;
+        let isActive = false;
+        let currentLang = 'cs';
+
+        const translations = {
+            cs: {
+                title: 'Měření tepové frekvence',
+                subtitle: 'Klikejte v rytmu svého tepu',
+                bpmUnit: 'tepů za minutu',
+                category: {
+                    resting: 'Klidový',
+                    normal: 'Normální',
+                    elevated: 'Zvýšený',
+                    high: 'Vysoký'
+                },
+                clickCount: 'Počet kliknutí:',
+                hint: 'Pro přesnější měření klikejte alespoň 5-10x',
+                startMessage: 'Začněte klikat...',
+                clicksMessage: 'kliknutí...',
+                reset: 'Resetovat',
+                howToTitle: 'Jak měřit:',
+                howTo: [
+                    'Najděte si tep na krku nebo zápěstí',
+                    'Klikejte na každý úder srdce',
+                    'Pokračujte alespoň 5-10 úderů',
+                    'Aplikace vypočítá váš puls'
+                ]
+            },
+            en: {
+                title: 'Heart Rate Measurement',
+                subtitle: 'Tap in rhythm with your heartbeat',
+                bpmUnit: 'beats per minute',
+                category: {
+                    resting: 'Resting',
+                    normal: 'Normal',
+                    elevated: 'Elevated',
+                    high: 'High'
+                },
+                clickCount: 'Tap count:',
+                hint: 'For more accurate results, tap at least 5-10 times',
+                startMessage: 'Start tapping...',
+                clicksMessage: 'taps...',
+                reset: 'Reset',
+                howToTitle: 'How to measure:',
+                howTo: [
+                    'Find your pulse on neck or wrist',
+                    'Tap on each heartbeat',
+                    'Continue for at least 5-10 beats',
+                    'App will calculate your heart rate'
+                ]
+            },
+            de: {
+                title: 'Herzfrequenzmessung',
+                subtitle: 'Tippen Sie im Rhythmus Ihres Herzschlags',
+                bpmUnit: 'Schläge pro Minute',
+                category: {
+                    resting: 'Ruhepuls',
+                    normal: 'Normal',
+                    elevated: 'Erhöht',
+                    high: 'Hoch'
+                },
+                clickCount: 'Anzahl der Klicks:',
+                hint: 'Für genauere Ergebnisse mindestens 5-10 Mal tippen',
+                startMessage: 'Beginnen Sie zu tippen...',
+                clicksMessage: 'Klicks...',
+                reset: 'Zurücksetzen',
+                howToTitle: 'So messen Sie:',
+                howTo: [
+                    'Finden Sie Ihren Puls am Hals oder Handgelenk',
+                    'Tippen Sie bei jedem Herzschlag',
+                    'Fahren Sie mindestens 5-10 Schläge fort',
+                    'Die App berechnet Ihre Herzfrequenz'
+                ]
+            },
+            es: {
+                title: 'Medición de frecuencia cardíaca',
+                subtitle: 'Toca al ritmo de tu corazón',
+                bpmUnit: 'latidos por minuto',
+                category: {
+                    resting: 'En reposo',
+                    normal: 'Normal',
+                    elevated: 'Elevado',
+                    high: 'Alto'
+                },
+                clickCount: 'Número de toques:',
+                hint: 'Para resultados más precisos, toca al menos 5-10 veces',
+                startMessage: 'Comienza a tocar...',
+                clicksMessage: 'toques...',
+                reset: 'Reiniciar',
+                howToTitle: 'Cómo medir:',
+                howTo: [
+                    'Encuentra tu pulso en el cuello o muñeca',
+                    'Toca en cada latido del corazón',
+                    'Continúa durante al menos 5-10 latidos',
+                    'La app calculará tu frecuencia cardíaca'
+                ]
+            }
+        };
+
+        function handleClick() {
+            const now = Date.now();
+            clicks.push(now);
+            isActive = true;
+            calculateBPM();
+            render();
+        }
+
+        function calculateBPM() {
+            if (clicks.length < 2) return;
+
+            const recentClicks = clicks.slice(-10);
+            
+            if (recentClicks.length >= 2) {
+                const intervals = [];
+                for (let i = 1; i < recentClicks.length; i++) {
+                    intervals.push(recentClicks[i] - recentClicks[i - 1]);
+                }
+                
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                const calculatedBpm = Math.round(60000 / avgInterval);
+                
+                if (calculatedBpm >= 30 && calculatedBpm <= 220) {
+                    bpm = calculatedBpm;
+                }
+            }
+        }
+
+        function reset() {
+            clicks = [];
+            bpm = null;
+            isActive = false;
+            render();
+        }
+
+        function changeLang(lang) {
+            currentLang = lang;
+            render();
+        }
+
+        function getBpmCategory(bpm) {
+            if (!bpm) return { text: '', color: '' };
+            const t = translations[currentLang].category;
+            if (bpm < 60) return { text: t.resting, color: 'text-blue-600' };
+            if (bpm < 100) return { text: t.normal, color: 'text-green-600' };
+            if (bpm < 140) return { text: t.elevated, color: 'text-orange-600' };
+            return { text: t.high, color: 'text-red-600' };
+        }
+
+        function render() {
+            const t = translations[currentLang];
+            const category = getBpmCategory(bpm);
+            
+            document.getElementById('app').innerHTML = `
+                <div class="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                        
+                        <!-- Language Selector -->
+                        <div class="flex justify-center gap-2 mb-6">
+                            ${['cs', 'en', 'de', 'es'].map(lang => `
+                                <button
+                                    onclick="changeLang('${lang}')"
+                                    class="px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                        currentLang === lang 
+                                            ? 'bg-red-500 text-white' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }"
+                                >
+                                    ${lang.toUpperCase()}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <div class="text-center mb-8">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                                ${t.title}
+                            </h1>
+                            <p class="text-gray-600">
+                                ${t.subtitle}
+                            </p>
+                        </div>
+
+                        <button
+                            onclick="handleClick()"
+                            class="w-full aspect-square rounded-full bg-gradient-to-br from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 active:scale-95 transition-all duration-200 shadow-lg flex items-center justify-center mb-8 cursor-pointer"
+                        >
+                            <svg class="w-24 h-24 text-white ${isActive ? 'heartbeat' : ''}" fill="white" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </button>
+
+                        <div class="text-center mb-6">
+                            ${bpm ? `
+                                <div class="text-6xl font-bold text-gray-800 mb-2">
+                                    ${bpm}
+                                </div>
+                                <div class="text-xl text-gray-600 mb-1">
+                                    ${t.bpmUnit}
+                                </div>
+                                <div class="text-lg font-semibold ${category.color}">
+                                    ${category.text}
+                                </div>
+                            ` : `
+                                <div class="text-gray-400 text-lg py-8">
+                                    ${clicks.length === 0 ? t.startMessage : `${clicks.length} ${t.clicksMessage}`}
+                                </div>
+                            `}
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                            <div class="text-sm text-gray-600 space-y-1">
+                                <div class="flex justify-between">
+                                    <span>${t.clickCount}</span>
+                                    <span class="font-semibold">${clicks.length}</span>
+                                </div>
+                                ${clicks.length >= 2 ? `
+                                    <div class="text-xs text-gray-500 mt-2">
+                                        ${t.hint}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <button
+                            onclick="reset()"
+                            class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            ${t.reset}
+                        </button>
+
+                        <div class="mt-6 p-4 bg-blue-50 rounded-xl">
+                            <h3 class="font-semibold text-blue-900 mb-2 text-sm">
+                                ${t.howToTitle}
+                            </h3>
+                            <ol class="text-xs text-blue-800 space-y-1 list-decimal list-inside">
+                                ${t.howTo.map(item => `<li>${item}</li>`).join('')}
+                            </ol>
+                        </div>
+
+                        <!-- Ad placeholder -->
+                        <div class="mt-6 p-4 bg-gray-100 rounded-xl text-center text-xs text-gray-500">
+                            Advertisement space
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        render();
+    </script>
+</body>
+</html>
