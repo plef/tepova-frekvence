@@ -77,7 +77,9 @@
                     'Klikejte na každý úder srdce',
                     'Pokračujte alespoň 5-10 úderů',
                     'Aplikace vypočítá váš puls'
-                ]
+                ],
+                visitCounter: 'Návštěv:',
+                privacy: 'Nesbíráme žádná osobní data • Vše zůstává v prohlížeči'
             },
             en: {
                 title: 'Heart Rate Measurement',
@@ -100,7 +102,9 @@
                     'Tap on each heartbeat',
                     'Continue for at least 5-10 beats',
                     'App will calculate your heart rate'
-                ]
+                ],
+                visitCounter: 'Visits:',
+                privacy: 'We don\'t collect any personal data • Everything stays in your browser'
             },
             de: {
                 title: 'Herzfrequenzmessung',
@@ -123,7 +127,9 @@
                     'Tippen Sie bei jedem Herzschlag',
                     'Fahren Sie mindestens 5-10 Schläge fort',
                     'Die App berechnet Ihre Herzfrequenz'
-                ]
+                ],
+                visitCounter: 'Besuche:',
+                privacy: 'Wir sammeln keine persönlichen Daten • Alles bleibt in Ihrem Browser'
             },
             es: {
                 title: 'Medición de frecuencia cardíaca',
@@ -146,7 +152,9 @@
                     'Toca en cada latido del corazón',
                     'Continúa durante al menos 5-10 latidos',
                     'La app calculará tu frecuencia cardíaca'
-                ]
+                ],
+                visitCounter: 'Visitas:',
+                privacy: 'No recopilamos datos personales • Todo permanece en tu navegador'
             }
         };
 
@@ -294,7 +302,12 @@
 
                         <!-- Počítadlo návštěv -->
                         <div class="mt-6 p-2 text-center text-xs text-gray-400">
-                            Návštěv: ${visitCount}
+                            ${t.visitCounter} ${visitCount}
+                        </div>
+
+                        <!-- Privacy -->
+                        <div class="mt-2 p-2 text-center text-xs text-gray-300 italic">
+                            🔒 ${t.privacy}
                         </div>
                     </div>
                 </div>
