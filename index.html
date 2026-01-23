@@ -36,6 +36,31 @@
             animation: heartbeat 0.6s ease-in-out infinite;
         }
     </style>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getDatabase, ref, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCjPQLIB2XQ6gEm7mlMRy2VtIuDg1PX4pc",
+            authDomain: "tepova-frekvence.firebaseapp.com",
+            projectId: "tepova-frekvence",
+            storageBucket: "tepova-frekvence.firebasestorage.app",
+            messagingSenderId: "41170643261",
+            appId: "1:41170643261:web:fad063adde9513ccec7d54",
+            databaseURL: "https://tepova-frekvence-default-rtdb.europe-west1.firebasedatabase.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Expose to global scope
+        window.firebaseDB = database;
+        window.firebaseRef = ref;
+        window.firebaseTransaction = runTransaction;
+        window.firebaseOnValue = onValue;
+    </script>
 </head>
 <body>
     <div id="app"></div>
@@ -45,15 +70,49 @@
         let bpm = null;
         let isActive = false;
         let currentLang = 'cs';
+        let visitCount = 0;
+        let measurementCount = 0;
 
-        // Počítadlo návštěv
-        function initVisitCounter() {
-            let visits = localStorage.getItem('visitCount');
-            visits = visits ? parseInt(visits) + 1 : 1;
-            localStorage.setItem('visitCount', visits);
-            return visits;
+        // Firebase globální počítadlo návštěv
+        async function initFirebaseCounters() {
+            try {
+                // Increment visits counter
+                const visitsRef = window.firebaseRef(window.firebaseDB, 'counters/visits');
+                await window.firebaseTransaction(visitsRef, (current) => {
+                    return (current || 0) + 1;
+                });
+
+                // Listen for real-time updates
+                window.firebaseOnValue(visitsRef, (snapshot) => {
+                    visitCount = snapshot.val() || 0;
+                    render();
+                });
+
+                // Listen for measurements counter
+                const measurementsRef = window.firebaseRef(window.firebaseDB, 'counters/measurements');
+                window.firebaseOnValue(measurementsRef, (snapshot) => {
+                    measurementCount = snapshot.val() || 0;
+                    render();
+                });
+            } catch (error) {
+                console.error('Firebase error:', error);
+                // Fallback to localStorage
+                visitCount = parseInt(localStorage.getItem('visitCount') || '0') + 1;
+                localStorage.setItem('visitCount', visitCount);
+            }
         }
-        const visitCount = initVisitCounter();
+
+        // Increment measurement counter when user completes a measurement
+        async function incrementMeasurementCounter() {
+            try {
+                const measurementsRef = window.firebaseRef(window.firebaseDB, 'counters/measurements');
+                await window.firebaseTransaction(measurementsRef, (current) => {
+                    return (current || 0) + 1;
+                });
+            } catch (error) {
+                console.error('Failed to increment measurements:', error);
+            }
+        }
 
         const translations = {
             cs: {
@@ -79,6 +138,7 @@
                     'Aplikace vypočítá váš puls'
                 ],
                 visitCount: 'Návštěv:',
+                measurementCount: 'Měření:',
                 privacyStatement: 'Nesbíráme žádná osobní data • Vše zůstává v prohlížeči'
             },
             en: {
@@ -104,6 +164,7 @@
                     'App will calculate your heart rate'
                 ],
                 visitCount: 'Visits:',
+                measurementCount: 'Measurements:',
                 privacyStatement: 'We collect no personal data • Everything stays in your browser'
             },
             de: {
@@ -129,6 +190,7 @@
                     'Die App berechnet Ihre Herzfrequenz'
                 ],
                 visitCount: 'Besuche:',
+                measurementCount: 'Messungen:',
                 privacyStatement: 'Wir sammeln keine persönlichen Daten • Alles bleibt in Ihrem Browser'
             },
             es: {
@@ -154,6 +216,7 @@
                     'La app calculará tu frecuencia cardíaca'
                 ],
                 visitCount: 'Visitas:',
+                measurementCount: 'Mediciones:',
                 privacyStatement: 'No recopilamos datos personales • Todo permanece en tu navegador'
             }
         };
@@ -187,6 +250,10 @@
         }
 
         function reset() {
+            // Increment measurement counter if user completed a valid measurement
+            if (bpm !== null && clicks.length >= 5) {
+                incrementMeasurementCounter();
+            }
             clicks = [];
             bpm = null;
             isActive = false;
@@ -300,9 +367,9 @@
                             </ol>
                         </div>
 
-                        <!-- Počítadlo návštěv -->
+                        <!-- Globální statistiky -->
                         <div class="mt-6 p-2 text-center text-xs text-gray-400">
-                            ${t.visitCount} ${visitCount}
+                            ${t.visitCount} ${visitCount.toLocaleString()} • ${t.measurementCount} ${measurementCount.toLocaleString()}
                         </div>
 
                         <!-- Privacy -->
@@ -314,7 +381,15 @@
             `;
         }
 
+        // Initialize app
         render();
+
+        // Wait for Firebase to be ready, then initialize counters
+        setTimeout(() => {
+            if (window.firebaseDB) {
+                initFirebaseCounters();
+            }
+        }, 100);
     </script>
 </body>
 </html>
