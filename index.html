@@ -73,14 +73,26 @@
         let visitCount = 0;
         let measurementCount = 0;
 
-        // Firebase globální počítadlo návštěv
+        // Firebase session-based počítadlo návštěv
         async function initFirebaseCounters() {
             try {
-                // Increment visits counter
+                const now = Date.now();
+                const lastSessionTime = localStorage.getItem('lastSessionTimestamp');
+                const SESSION_DURATION = 30 * 60 * 1000; // 30 minut
+
+                // Zkontroluj, jestli je to nová session
+                const isNewSession = !lastSessionTime || (now - parseInt(lastSessionTime)) > SESSION_DURATION;
+
                 const visitsRef = window.firebaseRef(window.firebaseDB, 'counters/visits');
-                await window.firebaseTransaction(visitsRef, (current) => {
-                    return (current || 0) + 1;
-                });
+
+                // Increment jen při nové session
+                if (isNewSession) {
+                    await window.firebaseTransaction(visitsRef, (current) => {
+                        return (current || 0) + 1;
+                    });
+                    // Ulož timestamp této session
+                    localStorage.setItem('lastSessionTimestamp', now.toString());
+                }
 
                 // Listen for real-time updates
                 window.firebaseOnValue(visitsRef, (snapshot) => {
@@ -97,8 +109,12 @@
             } catch (error) {
                 console.error('Firebase error:', error);
                 // Fallback to localStorage
-                visitCount = parseInt(localStorage.getItem('visitCount') || '0') + 1;
-                localStorage.setItem('visitCount', visitCount);
+                visitCount = parseInt(localStorage.getItem('sessionCount') || '0');
+                if (!localStorage.getItem('lastSessionTimestamp')) {
+                    visitCount++;
+                    localStorage.setItem('sessionCount', visitCount);
+                    localStorage.setItem('lastSessionTimestamp', Date.now().toString());
+                }
             }
         }
 
@@ -137,7 +153,7 @@
                     'Pokračujte alespoň 5-10 úderů',
                     'Aplikace vypočítá váš puls'
                 ],
-                visitCount: 'Návštěv:',
+                sessionCount: 'Návštěv:',
                 measurementCount: 'Měření:',
                 privacyStatement: 'Nesbíráme žádná osobní data • Vše zůstává v prohlížeči'
             },
@@ -163,7 +179,7 @@
                     'Continue for at least 5-10 beats',
                     'App will calculate your heart rate'
                 ],
-                visitCount: 'Visits:',
+                sessionCount: 'Visits:',
                 measurementCount: 'Measurements:',
                 privacyStatement: 'We collect no personal data • Everything stays in your browser'
             },
@@ -189,7 +205,7 @@
                     'Fahren Sie mindestens 5-10 Schläge fort',
                     'Die App berechnet Ihre Herzfrequenz'
                 ],
-                visitCount: 'Besuche:',
+                sessionCount: 'Besuche:',
                 measurementCount: 'Messungen:',
                 privacyStatement: 'Wir sammeln keine persönlichen Daten • Alles bleibt in Ihrem Browser'
             },
@@ -215,7 +231,7 @@
                     'Continúa durante al menos 5-10 latidos',
                     'La app calculará tu frecuencia cardíaca'
                 ],
-                visitCount: 'Visitas:',
+                sessionCount: 'Visitas:',
                 measurementCount: 'Mediciones:',
                 privacyStatement: 'No recopilamos datos personales • Todo permanece en tu navegador'
             }
@@ -369,7 +385,7 @@
 
                         <!-- Globální statistiky -->
                         <div class="mt-6 p-2 text-center text-xs text-gray-400">
-                            ${t.visitCount} ${visitCount.toLocaleString()} • ${t.measurementCount} ${measurementCount.toLocaleString()}
+                            ${t.sessionCount} ${visitCount.toLocaleString()} • ${t.measurementCount} ${measurementCount.toLocaleString()}
                         </div>
 
                         <!-- Privacy -->
