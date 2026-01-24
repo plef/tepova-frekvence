@@ -7,7 +7,7 @@ This app supports saving heart rate measurements directly to Apple Health on iOS
 ### Easy Installation - One Click!
 
 1. **Tap the "Download Shortcut" button** in the app when prompted
-2. Or open this link directly: [Install SaveHeartRate Shortcut](https://www.icloud.com/shortcuts/1b0c24cac4164523a3fdc552d8481bd6)
+2. Or open this link directly: [Install SaveHeartRate Shortcut](https://www.icloud.com/shortcuts/8d8c067e4a894472900d3dadf67c8364)
 3. iOS will open Shortcuts app
 4. Tap **"Add Shortcut"**
 5. Done! ✅
