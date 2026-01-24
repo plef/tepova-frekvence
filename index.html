@@ -97,23 +97,41 @@
         function saveToAppleHealth(bpmValue) {
             if (!isIOS) return;
 
-            // Zkontroluj jestli je zkratka nainstalovaná
-            // Pokusíme se ji spustit - pokud neexistuje, otevřeme setup
             const shortcutURL = `shortcuts://run-shortcut?name=SaveHeartRate&input=${encodeURIComponent(bpmValue)}`;
 
-            // Nastavíme timeout - pokud se za 2 sekundy nic nestane, zkratka asi není nainstalovaná
-            const startTime = Date.now();
+            // Pokud uživatel už zkratku použil úspěšně, rovnou spusť
+            const hasUsedShortcut = localStorage.getItem('hasUsedHealthShortcut');
+
+            if (hasUsedShortcut) {
+                window.location.href = shortcutURL;
+                return;
+            }
+
+            // První použití - detekuj jestli zkratka existuje
+            let redirectHappened = false;
+
+            // Když stránka ztratí focus (přepnutí do Shortcuts), znamená to že zkratka funguje
+            const visibilityHandler = () => {
+                if (document.hidden) {
+                    redirectHappened = true;
+                    localStorage.setItem('hasUsedHealthShortcut', 'true');
+                    document.removeEventListener('visibilitychange', visibilityHandler);
+                }
+            };
+
+            document.addEventListener('visibilitychange', visibilityHandler);
 
             window.location.href = shortcutURL;
 
-            // Po 1 sekundě zkontroluj jestli uživatel stále je na stránce
+            // Pokud se za 500ms nic nestane (stránka stále viditelná), zkratka asi není nainstalovaná
             setTimeout(() => {
-                if (Date.now() - startTime > 800) {
-                    // Zkratka pravděpodobně neexistuje - zobraz setup
+                document.removeEventListener('visibilitychange', visibilityHandler);
+                if (!redirectHappened && !document.hidden) {
+                    // Zkratka neexistuje - zobraz setup
                     showHealthSetup = true;
                     render();
                 }
-            }, 1000);
+            }, 500);
         }
 
         // Detekce země uživatele
