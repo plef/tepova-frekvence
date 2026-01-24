@@ -99,7 +99,7 @@
 
             // Zkontroluj jestli je zkratka nainstalovaná
             // Pokusíme se ji spustit - pokud neexistuje, otevřeme setup
-            const shortcutURL = `shortcuts://run-shortcut?name=SaveHeartRate&input=text:${bpmValue}`;
+            const shortcutURL = `shortcuts://run-shortcut?name=SaveHeartRate&input=${encodeURIComponent(bpmValue)}`;
 
             // Nastavíme timeout - pokud se za 2 sekundy nic nestane, zkratka asi není nainstalovaná
             const startTime = Date.now();
