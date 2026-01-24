@@ -76,6 +76,24 @@
         let sessionMeasurements = [];
         const MAX_MEASUREMENTS_PER_SESSION = 5;
         const MAX_TOTAL_MEASUREMENTS = 10000000; // ~1 GB limit
+        let isIOS = false;
+
+        // Detekce iOS zařízení
+        function detectIOS() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            isIOS = /iphone|ipad|ipod/.test(userAgent) && !window.MSStream;
+            return isIOS;
+        }
+
+        // Uložit BPM do Apple Health přes Shortcuts
+        function saveToAppleHealth(bpmValue) {
+            if (!isIOS) return;
+
+            // URL scheme pro iOS Shortcuts
+            // Format: shortcuts://run-shortcut?name=SaveHeartRate&input=text:75
+            const shortcutURL = `shortcuts://run-shortcut?name=SaveHeartRate&input=text:${bpmValue}`;
+            window.location.href = shortcutURL;
+        }
 
         // Detekce země uživatele
         async function detectUserCountry() {
@@ -238,7 +256,8 @@
                 ],
                 sessionCount: 'Návštěv:',
                 measurementCount: 'Měření:',
-                privacyStatement: 'Ukládáme: BPM, zemi, čas měření • Neukládáme: IP adresy, jména, osobní údaje'
+                privacyStatement: 'Ukládáme: BPM, zemi, čas měření • Neukládáme: IP adresy, jména, osobní údaje',
+                saveToHealth: 'Uložit do Health'
             },
             en: {
                 title: 'Heart Rate Measurement',
@@ -264,7 +283,8 @@
                 ],
                 sessionCount: 'Visits:',
                 measurementCount: 'Measurements:',
-                privacyStatement: 'We store: BPM, country, timestamp • We don\'t store: IP addresses, names, personal data'
+                privacyStatement: 'We store: BPM, country, timestamp • We don\'t store: IP addresses, names, personal data',
+                saveToHealth: 'Save to Health'
             },
             de: {
                 title: 'Herzfrequenzmessung',
@@ -290,7 +310,8 @@
                 ],
                 sessionCount: 'Besuche:',
                 measurementCount: 'Messungen:',
-                privacyStatement: 'Wir speichern: BPM, Land, Zeitstempel • Wir speichern nicht: IP-Adressen, Namen, persönliche Daten'
+                privacyStatement: 'Wir speichern: BPM, Land, Zeitstempel • Wir speichern nicht: IP-Adressen, Namen, persönliche Daten',
+                saveToHealth: 'In Health speichern'
             },
             es: {
                 title: 'Medición de frecuencia cardíaca',
@@ -316,7 +337,8 @@
                 ],
                 sessionCount: 'Visitas:',
                 measurementCount: 'Mediciones:',
-                privacyStatement: 'Almacenamos: BPM, país, marca de tiempo • No almacenamos: direcciones IP, nombres, datos personales'
+                privacyStatement: 'Almacenamos: BPM, país, marca de tiempo • No almacenamos: direcciones IP, nombres, datos personales',
+                saveToHealth: 'Guardar en Salud'
             }
         };
 
@@ -447,6 +469,18 @@
                             </div>
                         </div>
 
+                        ${isIOS && bpm !== null ? `
+                        <button
+                            onclick="saveToAppleHealth(${bpm})"
+                            class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer mb-3"
+                        >
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                            </svg>
+                            ${t.saveToHealth}
+                        </button>
+                        ` : ''}
+
                         <button
                             onclick="reset()"
                             class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
@@ -481,6 +515,7 @@
         }
 
         // Initialize app
+        detectIOS();
         render();
         loadSessionMeasurements();
         detectUserCountry();
