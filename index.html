@@ -77,6 +77,8 @@
         const MAX_MEASUREMENTS_PER_SESSION = 5;
         const MAX_TOTAL_MEASUREMENTS = 10000000; // ~1 GB limit
         let isIOS = false;
+        let showHealthSetup = false;
+        const SHORTCUT_ICLOUD_LINK = 'https://www.icloud.com/shortcuts/1b0c24cac4164523a3fdc552d8481bd6';
 
         // Detekce iOS zařízení
         function detectIOS() {
@@ -85,14 +87,33 @@
             return isIOS;
         }
 
+        // Zobrazit/skrýt Health setup instrukce
+        function toggleHealthSetup() {
+            showHealthSetup = !showHealthSetup;
+            render();
+        }
+
         // Uložit BPM do Apple Health přes Shortcuts
         function saveToAppleHealth(bpmValue) {
             if (!isIOS) return;
 
-            // URL scheme pro iOS Shortcuts
-            // Format: shortcuts://run-shortcut?name=SaveHeartRate&input=text:75
+            // Zkontroluj jestli je zkratka nainstalovaná
+            // Pokusíme se ji spustit - pokud neexistuje, otevřeme setup
             const shortcutURL = `shortcuts://run-shortcut?name=SaveHeartRate&input=text:${bpmValue}`;
+
+            // Nastavíme timeout - pokud se za 2 sekundy nic nestane, zkratka asi není nainstalovaná
+            const startTime = Date.now();
+
             window.location.href = shortcutURL;
+
+            // Po 1 sekundě zkontroluj jestli uživatel stále je na stránce
+            setTimeout(() => {
+                if (Date.now() - startTime > 800) {
+                    // Zkratka pravděpodobně neexistuje - zobraz setup
+                    showHealthSetup = true;
+                    render();
+                }
+            }, 1000);
         }
 
         // Detekce země uživatele
@@ -257,7 +278,15 @@
                 sessionCount: 'Návštěv:',
                 measurementCount: 'Měření:',
                 privacyStatement: 'Ukládáme: BPM, zemi, čas měření • Neukládáme: IP adresy, jména, osobní údaje',
-                saveToHealth: 'Uložit do Health'
+                saveToHealth: 'Uložit do Health',
+                healthSetup: {
+                    title: 'Nastavení Apple Health',
+                    description: 'Pro uložení tepové frekvence do Health je potřeba jednorázově nainstalovat zkratku.',
+                    downloadButton: 'Stáhnout zkratku',
+                    orManual: 'Nebo vytvořit manuálně',
+                    close: 'Zavřít',
+                    setupLink: 'Jak nastavit?'
+                }
             },
             en: {
                 title: 'Heart Rate Measurement',
@@ -284,7 +313,15 @@
                 sessionCount: 'Visits:',
                 measurementCount: 'Measurements:',
                 privacyStatement: 'We store: BPM, country, timestamp • We don\'t store: IP addresses, names, personal data',
-                saveToHealth: 'Save to Health'
+                saveToHealth: 'Save to Health',
+                healthSetup: {
+                    title: 'Apple Health Setup',
+                    description: 'To save heart rate to Health, you need to install the shortcut once.',
+                    downloadButton: 'Download Shortcut',
+                    orManual: 'Or create manually',
+                    close: 'Close',
+                    setupLink: 'How to set up?'
+                }
             },
             de: {
                 title: 'Herzfrequenzmessung',
@@ -311,7 +348,15 @@
                 sessionCount: 'Besuche:',
                 measurementCount: 'Messungen:',
                 privacyStatement: 'Wir speichern: BPM, Land, Zeitstempel • Wir speichern nicht: IP-Adressen, Namen, persönliche Daten',
-                saveToHealth: 'In Health speichern'
+                saveToHealth: 'In Health speichern',
+                healthSetup: {
+                    title: 'Apple Health Einrichtung',
+                    description: 'Um die Herzfrequenz in Health zu speichern, müssen Sie einmalig die Verknüpfung installieren.',
+                    downloadButton: 'Verknüpfung laden',
+                    orManual: 'Oder manuell erstellen',
+                    close: 'Schließen',
+                    setupLink: 'Wie einrichten?'
+                }
             },
             es: {
                 title: 'Medición de frecuencia cardíaca',
@@ -338,7 +383,15 @@
                 sessionCount: 'Visitas:',
                 measurementCount: 'Mediciones:',
                 privacyStatement: 'Almacenamos: BPM, país, marca de tiempo • No almacenamos: direcciones IP, nombres, datos personales',
-                saveToHealth: 'Guardar en Salud'
+                saveToHealth: 'Guardar en Salud',
+                healthSetup: {
+                    title: 'Configuración de Apple Health',
+                    description: 'Para guardar la frecuencia cardíaca en Health, necesita instalar el atajo una vez.',
+                    downloadButton: 'Descargar Atajo',
+                    orManual: 'O crear manualmente',
+                    close: 'Cerrar',
+                    setupLink: '¿Cómo configurar?'
+                }
             }
         };
 
@@ -472,13 +525,18 @@
                         ${isIOS && bpm !== null ? `
                         <button
                             onclick="saveToAppleHealth(${bpm})"
-                            class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer mb-3"
+                            class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer mb-2"
                         >
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
                             </svg>
                             ${t.saveToHealth}
                         </button>
+                        <div class="text-center mb-3">
+                            <button onclick="toggleHealthSetup()" class="text-xs text-gray-500 hover:text-gray-700 underline">
+                                ℹ️ ${t.healthSetup.setupLink}
+                            </button>
+                        </div>
                         ` : ''}
 
                         <button
@@ -511,6 +569,35 @@
                         </div>
                     </div>
                 </div>
+
+                ${showHealthSetup && isIOS ? `
+                <!-- Health Setup Modal -->
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="toggleHealthSetup()">
+                    <div class="bg-white rounded-2xl p-6 max-w-md w-full" onclick="event.stopPropagation()">
+                        <h2 class="text-xl font-bold text-gray-800 mb-3">
+                            ${t.healthSetup.title}
+                        </h2>
+                        <p class="text-sm text-gray-600 mb-4">
+                            ${t.healthSetup.description}
+                        </p>
+
+                        <a href="${SHORTCUT_ICLOUD_LINK}"
+                           class="block w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 text-center mb-3">
+                            📥 ${t.healthSetup.downloadButton}
+                        </a>
+
+                        <a href="IOS_HEALTH_SETUP.md" target="_blank"
+                           class="block text-center text-sm text-gray-500 hover:text-gray-700 underline mb-4">
+                            ${t.healthSetup.orManual}
+                        </a>
+
+                        <button onclick="toggleHealthSetup()"
+                                class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-xl">
+                            ${t.healthSetup.close}
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
             `;
         }
 
