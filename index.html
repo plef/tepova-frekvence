@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fef2f2" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
     <title>Měření tepové frekvence zdarma - Online měřič tepu BPM | Heart Rate Counter</title>
     <meta name="description" content="Změřte si tepovou frekvenci online zdarma klikáním v rytmu srdce. Žádné zařízení není potřeba. Funguje na všech zařízeních. Free heart rate counter - measure your pulse instantly by tapping.">
     <meta name="keywords" content="tepová frekvence, měření tepu, srdeční tep, BPM, puls, heart rate, pulse counter, fitness, zdraví, zdarma, free heart rate monitor">
@@ -33,6 +35,11 @@
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
     <style>
         @keyframes heartbeat {
             0%, 100% { transform: scale(1); }
@@ -85,6 +92,7 @@
         let isIOS = false;
         let showHealthSetup = false;
         let lastBpmForHealth = null;
+        let darkMode = false;
         const SHORTCUT_ICLOUD_LINK = 'https://www.icloud.com/shortcuts/8d8c067e4a894472900d3dadf67c8364';
 
         // Country to language mapping
@@ -109,6 +117,45 @@
         // Get language based on country code
         function getLanguageFromCountry(countryCode) {
             return countryToLang[countryCode] || 'cs'; // Default to Czech if country not in mapping
+        }
+
+        // Dark mode detection and management
+        function initDarkMode() {
+            const saved = localStorage.getItem('darkMode');
+
+            if (saved !== null) {
+                // User has manual preference
+                darkMode = saved === 'true';
+            } else {
+                // Use system preference
+                darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+
+            applyDarkMode();
+
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (localStorage.getItem('darkMode') === null) {
+                    darkMode = e.matches;
+                    applyDarkMode();
+                    render();
+                }
+            });
+        }
+
+        function applyDarkMode() {
+            if (darkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        function toggleDarkMode() {
+            darkMode = !darkMode;
+            localStorage.setItem('darkMode', darkMode);
+            applyDarkMode();
+            render();
         }
 
         // Detekce iOS zařízení
@@ -575,30 +622,37 @@
             const category = getBpmCategory(bpm);
             
             document.getElementById('app').innerHTML = `
-                <div class="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center p-4">
-                    <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
-                        
-                        <!-- Language Selector -->
-                        <div class="flex justify-center gap-2 mb-6">
+                <div class="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 max-w-md w-full">
+
+                        <!-- Language & Theme Selector -->
+                        <div class="flex justify-center gap-2 mb-6 flex-wrap">
                             ${['cs', 'en', 'de', 'es'].map(lang => `
                                 <button
                                     onclick="changeLang('${lang}')"
                                     class="px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                        currentLang === lang 
-                                            ? 'bg-red-500 text-white' 
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        currentLang === lang
+                                            ? 'bg-red-500 text-white'
+                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                     }"
                                 >
                                     ${lang.toUpperCase()}
                                 </button>
                             `).join('')}
+                            <button
+                                onclick="toggleDarkMode()"
+                                class="px-3 py-1 rounded-lg text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                                title="${darkMode ? '☀️ Light' : '🌙 Dark'}"
+                            >
+                                ${darkMode ? '☀️' : '🌙'}
+                            </button>
                         </div>
 
                         <div class="text-center mb-8">
-                            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
                                 ${t.title}
                             </h1>
-                            <p class="text-gray-600">
+                            <p class="text-gray-600 dark:text-gray-300">
                                 ${t.subtitle}
                             </p>
                         </div>
@@ -614,30 +668,30 @@
 
                         <div class="text-center mb-6">
                             ${bpm ? `
-                                <div class="text-6xl font-bold text-gray-800 mb-2">
+                                <div class="text-6xl font-bold text-gray-800 dark:text-gray-100 mb-2">
                                     ${bpm}
                                 </div>
-                                <div class="text-xl text-gray-600 mb-1">
+                                <div class="text-xl text-gray-600 dark:text-gray-300 mb-1">
                                     ${t.bpmUnit}
                                 </div>
-                                <div class="text-lg font-semibold ${category.color}">
+                                <div class="text-lg font-semibold ${category.color} dark:brightness-125">
                                     ${category.text}
                                 </div>
                             ` : `
-                                <div class="text-gray-400 text-lg py-8">
+                                <div class="text-gray-400 dark:text-gray-500 text-lg py-8">
                                     ${clicks.length === 0 ? t.startMessage : `${clicks.length} ${t.clicksMessage}`}
                                 </div>
                             `}
                         </div>
 
-                        <div class="bg-gray-50 rounded-xl p-4 mb-6">
-                            <div class="text-sm text-gray-600 space-y-1">
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-6">
+                            <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                                 <div class="flex justify-between">
                                     <span>${t.clickCount}</span>
                                     <span class="font-semibold">${clicks.length}</span>
                                 </div>
                                 ${clicks.length >= 2 ? `
-                                    <div class="text-xs text-gray-500 mt-2">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                                         ${t.hint}
                                     </div>
                                 ` : ''}
@@ -655,7 +709,7 @@
                             ${t.saveToHealth}
                         </button>
                         <div class="text-center mb-3">
-                            <button onclick="toggleHealthSetup()" class="text-xs text-gray-500 hover:text-gray-700 underline">
+                            <button onclick="toggleHealthSetup()" class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline">
                                 ℹ️ ${t.healthSetup.setupLink}
                             </button>
                         </div>
@@ -663,7 +717,7 @@
 
                         <button
                             onclick="reset()"
-                            class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                            class="w-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-100 font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -671,18 +725,18 @@
                             ${t.reset}
                         </button>
 
-                        <div class="mt-6 p-4 bg-blue-50 rounded-xl">
-                            <h3 class="font-semibold text-blue-900 mb-2 text-sm">
+                        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
+                            <h3 class="font-semibold text-blue-900 dark:text-blue-300 mb-2 text-sm">
                                 ${t.howToTitle}
                             </h3>
-                            <ol class="text-xs text-blue-800 space-y-1 list-decimal list-inside">
+                            <ol class="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
                                 ${t.howTo.map(item => `<li>${item}</li>`).join('')}
                             </ol>
                         </div>
 
                         <!-- Sdílení -->
-                        <div class="mt-6 p-4 bg-gray-50 rounded-xl">
-                            <h3 class="font-semibold text-gray-700 mb-3 text-sm text-center">
+                        <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                            <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-3 text-sm text-center">
                                 ${t.shareTitle}
                             </h3>
                             <div class="flex flex-wrap gap-2 justify-center">
@@ -732,12 +786,12 @@
                         </div>
 
                         <!-- Globální statistiky -->
-                        <div class="mt-6 p-2 text-center text-xs text-gray-400">
+                        <div class="mt-6 p-2 text-center text-xs text-gray-400 dark:text-gray-500">
                             ${t.sessionCount} ${visitCount.toLocaleString()} • ${t.measurementCount} ${measurementCount.toLocaleString()}
                         </div>
 
                         <!-- Privacy -->
-                        <div class="mt-2 p-2 text-center text-xs text-gray-300 italic">
+                        <div class="mt-2 p-2 text-center text-xs text-gray-300 dark:text-gray-600 italic">
                             🔒 ${t.privacyStatement}
                         </div>
                     </div>
@@ -745,12 +799,12 @@
 
                 ${showHealthSetup && isIOS ? `
                 <!-- Health Setup Modal -->
-                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="toggleHealthSetup()">
-                    <div class="bg-white rounded-2xl p-6 max-w-md w-full" onclick="event.stopPropagation()">
-                        <h2 class="text-xl font-bold text-gray-800 mb-3">
+                <div class="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50" onclick="toggleHealthSetup()">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full" onclick="event.stopPropagation()">
+                        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3">
                             ${t.healthSetup.title}
                         </h2>
-                        <p class="text-sm text-gray-600 mb-4">
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
                             ${t.healthSetup.description}
                         </p>
 
@@ -760,7 +814,7 @@
                         </a>
 
                         <a href="IOS_HEALTH_SETUP.md" target="_blank"
-                           class="block text-center text-sm text-gray-500 hover:text-gray-700 underline mb-4">
+                           class="block text-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline mb-4">
                             ${t.healthSetup.orManual}
                         </a>
 
@@ -770,7 +824,7 @@
                         </button>
 
                         <button onclick="toggleHealthSetup()"
-                                class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-xl">
+                                class="w-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-100 font-semibold py-2 px-4 rounded-xl">
                             ${t.healthSetup.close}
                         </button>
                     </div>
@@ -781,6 +835,7 @@
 
         // Initialize app
         detectIOS();
+        initDarkMode();
 
         // Check for manual language override
         const manualLangOverride = localStorage.getItem('manualLangOverride');
