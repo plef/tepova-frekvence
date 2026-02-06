@@ -20,6 +20,7 @@ To secure the API key, you must configure domain restrictions:
 4. Under **Application restrictions**, select **HTTP referrers (websites)**
 5. Add these referrers:
    ```
+   https://plef.github.io/tepova-frekvence/*
    https://plef.github.io/*
    http://localhost
    http://127.0.0.1
