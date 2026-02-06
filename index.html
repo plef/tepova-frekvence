@@ -34,6 +34,13 @@
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Heart Rate">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -414,7 +421,8 @@
                 },
                 shareTitle: 'Sdílet',
                 shareText: 'Změřte si tepovou frekvenci online zdarma!',
-                linkCopied: 'Link zkopírován!'
+                linkCopied: 'Link zkopírován!',
+                installApp: 'Nainstalovat aplikaci'
             },
             en: {
                 title: 'Heart Rate Measurement',
@@ -453,7 +461,8 @@
                 },
                 shareTitle: 'Share',
                 shareText: 'Measure your heart rate online for free!',
-                linkCopied: 'Link copied!'
+                linkCopied: 'Link copied!',
+                installApp: 'Install app'
             },
             de: {
                 title: 'Herzfrequenzmessung',
@@ -492,7 +501,8 @@
                 },
                 shareTitle: 'Teilen',
                 shareText: 'Messen Sie Ihre Herzfrequenz kostenlos online!',
-                linkCopied: 'Link kopiert!'
+                linkCopied: 'Link kopiert!',
+                installApp: 'App installieren'
             },
             es: {
                 title: 'Medición de frecuencia cardíaca',
@@ -531,9 +541,38 @@
                 },
                 shareTitle: 'Compartir',
                 shareText: '¡Mide tu frecuencia cardíaca online gratis!',
-                linkCopied: '¡Enlace copiado!'
+                linkCopied: '¡Enlace copiado!',
+                installApp: 'Instalar app'
             }
         };
+
+        // PWA Install prompt
+        let deferredPrompt;
+        let showInstallButton = false;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallButton = true;
+            render();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            showInstallButton = false;
+            render();
+        });
+
+        async function installApp() {
+            if (!deferredPrompt) {
+                return;
+            }
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            showInstallButton = false;
+            render();
+        }
 
         function handleClick() {
             const now = Date.now();
@@ -624,6 +663,21 @@
             document.getElementById('app').innerHTML = `
                 <div class="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
                     <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 max-w-md w-full">
+
+                        ${showInstallButton ? `
+                        <!-- Install Button -->
+                        <div class="mb-4">
+                            <button
+                                onclick="installApp()"
+                                class="w-full bg-gradient-to-r from-red-400 to-pink-400 hover:from-red-500 hover:to-pink-500 text-white text-sm font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-md"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                ${t.installApp}
+                            </button>
+                        </div>
+                        ` : ''}
 
                         <!-- Language & Theme Selector -->
                         <div class="flex justify-center gap-2 mb-6 flex-wrap">
@@ -854,6 +908,21 @@
                 initFirebaseCounters();
             }
         }, 100);
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>

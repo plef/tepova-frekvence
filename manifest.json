@@ -1,0 +1,28 @@
+{
+  "name": "Měření tepové frekvence | Heart Rate Counter",
+  "short_name": "Heart Rate",
+  "description": "Změřte si tepovou frekvenci online zdarma klikáním v rytmu srdce. Measure your heart rate by tapping.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ef4444",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ef4444'%3E%3Cpath d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'/%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23ef4444' rx='115'/%3E%3Cpath fill='%23fff' d='M115 170c-30 0-55 25-55 55 0 50 90 140 195 195 105-55 195-145 195-195 0-30-25-55-55-55-20 0-38 11-48 28l-47 72-47-72c-10-17-28-28-48-28z'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "fitness", "medical", "lifestyle"],
+  "lang": "cs",
+  "dir": "ltr",
+  "screenshots": []
+}
