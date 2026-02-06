@@ -1,5 +1,40 @@
 # Firebase Setup Instructions
 
+## API Key Security Configuration
+
+### Important: Firebase API Key in Code
+
+The Firebase API key `AIzaSyCjPQLIB2XQ6gEm7mlMRy2VtIuDg1PX4pc` is **intentionally public** in the source code. This is normal and secure for Firebase web applications - the key is designed for client-side use.
+
+**Security is provided by:**
+1. Domain restrictions (HTTP referrers)
+2. Firebase Security Rules (database access control)
+
+### Configure API Key Restrictions
+
+To secure the API key, you must configure domain restrictions:
+
+1. Go to **Google Cloud Console**: https://console.cloud.google.com/apis/credentials?project=tepova-frekvence
+2. Find API key: `AIzaSyCjPQLIB2XQ6gEm7mlMRy2VtIuDg1PX4pc`
+3. Click the edit icon (pencil)
+4. Under **Application restrictions**, select **HTTP referrers (websites)**
+5. Add these referrers:
+   ```
+   https://plef.github.io/tepova-frekvence/*
+   https://plef.github.io/*
+   http://localhost
+   http://127.0.0.1
+   ```
+6. Click **Save**
+
+### Why This Works
+
+- **Domain restrictions** prevent the API key from being used on other websites
+- **Firebase Security Rules** (below) prevent unauthorized database operations
+- Together, these provide complete security even with a public API key
+
+This is the standard security model for Firebase web applications recommended by Google.
+
 ## Security Rules Configuration
 
 To protect your Firebase Realtime Database from abuse, you need to configure security rules.
